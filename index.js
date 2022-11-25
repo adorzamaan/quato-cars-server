@@ -18,6 +18,21 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send("Unauthorized Access");
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.access_token, function (err, decoded) {
+    if (err) {
+      res.status(403).send({ message: "Unauthorized Access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function dbConnect() {
   try {
     client.connect();
@@ -30,6 +45,41 @@ async function dbConnect() {
 dbConnect().catch((err) => console.log(err.message));
 
 const userCollection = client.db("QuatoCarsDb").collection("users");
+const categoriesCollection = client.db("QuatoCarsDb").collection("categories");
+const carsCollection = client.db("QuatoCarsDb").collection("carCollections");
+const bookingCollection = client.db("QuatoCarsDb").collection("bookings");
+
+app.post("/bookings", async (req, res) => {
+  const booking = req.body;
+  const result = await bookingCollection.insertOne(booking);
+  res.send(result);
+});
+
+app.get("/bookings", verifyJWT, async (req, res) => {
+  const email = req.query.email;
+  const decodedEmail = req.decoded.email;
+  if (email !== decodedEmail) {
+    return res.status(403).send({ message: "Forbidden Access" });
+  }
+  const query = { email: email };
+  const result = await bookingCollection.find(query).toArray();
+  res.send(result);
+});
+
+app.get("/categories", async (req, res) => {
+  try {
+    const query = {};
+    const result = await categoriesCollection.find(query).toArray();
+    res.send(result);
+  } catch (error) {}
+});
+
+app.get("/categories/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { category_id: id };
+  const result = await carsCollection.find(query).toArray();
+  res.send(result);
+});
 
 app.get("/jwt", async (req, res) => {
   const email = req.query.email;
