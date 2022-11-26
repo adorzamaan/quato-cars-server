@@ -1,5 +1,5 @@
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("colors");
@@ -66,6 +66,34 @@ app.get("/bookings", verifyJWT, async (req, res) => {
   res.send(result);
 });
 
+app.post("/categories", async (req, res) => {
+  const category = req.body;
+  const result = await carsCollection.insertOne(category);
+  res.send(result);
+});
+
+app.post("/products", async (req, res) => {
+  const category = req.body;
+  const result = await carsCollection.insertOne(category);
+  res.send(result);
+});
+
+app.get("/products", async (req, res) => {
+  const email = req.query.email;
+  const query = { email: email };
+  const result = await carsCollection.find(query).toArray();
+  const productQuery = {};
+  const allProduct = await carsCollection.find(productQuery).toArray();
+  res.send({ data: { result, allProduct } });
+});
+
+app.delete("/products/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const result = await carsCollection.deleteOne(query);
+  res.send(result);
+});
+
 app.get("/categories", async (req, res) => {
   try {
     const query = {};
@@ -76,10 +104,15 @@ app.get("/categories", async (req, res) => {
 
 app.get("/categories/:id", async (req, res) => {
   const id = req.params.id;
+  // const emailquery = req.query.email;
+  // const filter = { email: emailquery };
+  // const products = await carsCollection.find(filter).toArray();
   const query = { category_id: id };
   const result = await carsCollection.find(query).toArray();
-  res.send(result);
+  res.send({ data: { result } });
 });
+
+// app.get('/categories/:email')
 
 app.get("/jwt", async (req, res) => {
   const email = req.query.email;
@@ -103,13 +136,55 @@ app.post("/users", async (req, res) => {
     res.send(error.message);
   }
 });
+
+// app.get("/users", async (req, res) => {
+//   try {
+//     const query = {};
+//     const result = await userCollection.find(query).toArray();
+//     res.send(result);
+//   } catch (error) {}
+// });
+
 app.get("/users", async (req, res) => {
-  try {
-    const query = {};
-    const result = await userCollection.find(query).toArray();
-    res.send(result);
-  } catch (error) {}
+  // const email = req.query.email;
+  const filter = { profile: "Buyer" };
+  const query = { profile: "Seller" };
+  const buyers = await userCollection.find(filter).toArray();
+  const users = await userCollection.find(query).toArray();
+  res.send({
+    data: { users, buyers },
+  });
+  // res.send({
+  //   isSeller: user.profile === "Seller",
+  // });
 });
+
+app.get("/users/buyer/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { email: email };
+  const user = await userCollection.findOne(query);
+  res.send({
+    isbuyer: user?.profile === "Buyer",
+  });
+});
+
+app.get("/users/seller/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { email: email };
+  const user = await userCollection.findOne(query);
+  res.send({
+    isSeller: user?.profile === "Seller",
+  });
+});
+app.get("/users/admin/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { email: email };
+  const user = await userCollection.findOne(query);
+  res.send({
+    isAdmin: user?.profile === "admin",
+  });
+});
+
 app.get("/", (req, res) => {
   res.send("I'm from backend");
 });
