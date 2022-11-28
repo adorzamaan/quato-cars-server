@@ -12,12 +12,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// mongodb uri
 const uri = `mongodb+srv://${process.env.QuatoCarsDb}:${process.env.QuatoCarsPass}@cluster0.chgrg5k.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
 // verify JWT TOKEN
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -33,7 +35,7 @@ function verifyJWT(req, res, next) {
     next();
   });
 }
-
+// dbConnect function
 async function dbConnect() {
   try {
     client.connect();
