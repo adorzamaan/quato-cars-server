@@ -2,6 +2,7 @@ const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const { reset } = require("colors");
 require("colors");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
@@ -83,11 +84,40 @@ app.post("/products", async (req, res) => {
 app.get("/products", async (req, res) => {
   const email = req.query.email;
   const query = { email: email };
+  const advirtised = { status: "advirtised" };
+  const advirtisedresult = await carsCollection.find(advirtised).toArray();
   const result = await carsCollection.find(query).toArray();
   const productQuery = {};
   const allProduct = await carsCollection.find(productQuery).toArray();
-  res.send({ data: { result, allProduct } });
+  res.send({ data: { result, allProduct, advirtisedresult } });
 });
+
+app.put("/products/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const options = { upsert: true };
+  const updatedDoc = {
+    $set: {
+      status: "advirtised",
+    },
+  };
+  const result = await carsCollection.updateOne(query, updatedDoc, options);
+  res.send(result);
+});
+
+//   app.put("/products/:id", async (req, res) => {
+//     const id = req.params.id;
+//     const query = { _id: ObjectId(id) };
+//     const options = { upsert: true };
+//     const updatedDoc = {
+//       $set: {
+//         status: "advirtised",
+//       },
+//     };
+//   });
+//   const result = await carsCollection.updateOne(query, updatedDoc, options);
+//   res.send(result);
+// });
 
 app.delete("/products/:id", async (req, res) => {
   const id = req.params.id;
